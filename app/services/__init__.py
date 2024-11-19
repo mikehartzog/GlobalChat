@@ -1,0 +1,1 @@
+from app.services.translation import translate_text
