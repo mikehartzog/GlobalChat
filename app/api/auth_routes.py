@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Form
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
+from typing import Optional
 from app import models, schemas, auth
 from app.database import get_db
 from datetime import timedelta
-from typing import Optional
 
 router = APIRouter()
 
@@ -35,11 +36,11 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=schemas.Token)
 async def login(
-    email_or_username: str = Form(...),
+    username: str = Form(...),
     password: str = Form(...),
     db: Session = Depends(get_db)
 ):
-    user = auth.authenticate_user(db, email_or_username, password)
+    user = auth.authenticate_user(db, username, password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
