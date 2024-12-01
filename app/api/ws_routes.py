@@ -62,47 +62,46 @@ async def websocket_endpoint(
         return
 
     await manager.connect(user.id, websocket)
-    print(f"User {user.username} (ID: {user.id}) connected with preferred language {user.preferred_language} and auto_translate={user.auto_translate}")
+    print(f"User {user.username} (ID: {user.id}) connected with preferred language {user.preferred_language}")
     
     try:
         while True:
             data = await websocket.receive_json()
-            print(f"\nReceived message from {user.username}:")
-            print(f"Content: {data['content']}")
-            print(f"Original language: {data['original_language']}")
+            print(f"Received message from {user.username}")
             
-            # Get translations for all other users who need them
+            # Get translations
             translations = {}
-            connected_users = manager.active_connections.keys()
-            for recipient_id in connected_users:
-                if recipient_id != user.id:
-                    recipient = db.query(models.User).filter(models.User.id == recipient_id).first()
-                    print(f"\nChecking translation needs for recipient {recipient.username}:")
-                    print(f"Recipient preferred language: {recipient.preferred_language}")
-                    print(f"Recipient auto_translate: {recipient.auto_translate}")
-                    if recipient and recipient.auto_translate:
-                        if (recipient.preferred_language != data["original_language"]):
-                            print(f"Translating from {data['original_language']} to {recipient.preferred_language}")
-                            translated = translate_text(data["content"], recipient.preferred_language)
-                            translations[recipient.preferred_language] = translated
-                            print(f"Translation result: {translated}")
-                        else:
-                            print("No translation needed - languages match")
-                    else:
-                        print("No translation needed - auto_translate is off")
+            recipient_id = data.get('recipient_id')
+            
+            if recipient_id:
+                # Private message - only translate for recipient
+                recipient = db.query(models.User).filter(models.User.id == recipient_id).first()
+                if recipient and recipient.auto_translate and recipient.preferred_language != data["original_language"]:
+                    translated = translate_text(data["content"], recipient.preferred_language)
+                    translations[recipient.preferred_language] = translated
+            else:
+                # Broadcast message - translate for all users
+                for conn_id in manager.active_connections:
+                    if conn_id != user.id:
+                        recipient = db.query(models.User).filter(models.User.id == conn_id).first()
+                        if recipient and recipient.auto_translate and recipient.preferred_language != data["original_language"]:
+                            if recipient.preferred_language not in translations:
+                                translated = translate_text(data["content"], recipient.preferred_language)
+                                translations[recipient.preferred_language] = translated
 
             # Create message in database
             message = models.Message(
                 content=data["content"],
                 original_language=data["original_language"],
                 sender_id=user.id,
+                recipient_id=recipient_id,
                 translations=json.dumps(translations)
             )
             db.add(message)
             db.commit()
             db.refresh(message)
 
-            # Prepare message for broadcasting
+            # Prepare message for sending
             message_data = {
                 "id": message.id,
                 "content": message.content,
@@ -113,14 +112,21 @@ async def websocket_endpoint(
                     "preferred_language": user.preferred_language
                 },
                 "created_at": message.created_at.isoformat(),
-                "translations": translations
+                "translations": translations,
+                "private": recipient_id is not None
             }
 
-            print(f"\nBroadcasting message with translations: {translations}")
-            await manager.broadcast(message_data, user.id)
+            if recipient_id:
+                # Send private message only to recipient
+                if recipient_id in manager.active_connections:
+                    await manager.active_connections[recipient_id].send_json(message_data)
+            else:
+                # Broadcast to all except sender
+                await manager.broadcast(message_data, user.id)
 
     except WebSocketDisconnect:
         manager.disconnect(user.id)
+        print(f"User {user.username} disconnected")
     except Exception as e:
         print(f"Error in websocket: {str(e)}")
         manager.disconnect(user.id)

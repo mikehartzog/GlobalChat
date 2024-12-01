@@ -92,6 +92,17 @@ async def get_message(
         "translations": translations
     }
 
+@router.get("/users/online", response_model=List[schemas.UserResponse])
+async def get_online_users(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    # Get all users except current user
+    users = db.query(models.User)\
+        .filter(models.User.id != current_user.id)\
+        .all()
+    return users
+
 
 @router.delete("/{message_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_message(

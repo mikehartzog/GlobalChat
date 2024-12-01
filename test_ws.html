@@ -1,260 +1,410 @@
 <!DOCTYPE html>
 <html>
 <head>
-   <title>GlobalChat WebSocket Test</title>
-   <style>
-       .message-container {
-           margin: 20px;
-           padding: 10px;
-           border: 1px solid #ccc;
-           height: 400px;
-           overflow-y: auto;
-       }
-       .message {
-           margin: 5px;
-           padding: 10px;
-           border-radius: 5px;
-       }
-       .received {
-           background-color: #e9ecef;
-           margin-right: 20%;
-       }
-       .sent {
-           background-color: #d4edda;
-           margin-left: 20%;
-           text-align: right;
-       }
-       .translation {
-           font-style: italic;
-           color: #666;
-           margin-top: 5px;
-           padding-top: 5px;
-           border-top: 1px solid #ddd;
-       }
-       .user-info {
-           margin: 10px 0;
-           padding: 10px;
-           background-color: #f8f9fa;
-           border-radius: 5px;
-       }
-       .controls {
-           margin: 10px;
-           padding: 10px;
-       }
-       input[type="text"], input[type="email"], input[type="password"] {
-           padding: 5px;
-           margin: 5px;
-           width: 300px;
-       }
-       button {
-           padding: 5px 10px;
-           margin: 5px;
-       }
-       #connectionStatus {
-           margin-left: 10px;
-           font-weight: bold;
-       }
-       .login-section {
-           margin: 20px;
-           padding: 20px;
-           border: 1px solid #ddd;
-           border-radius: 5px;
-       }
-       .chat-section {
-           display: none;
-           margin: 20px;
-       }
-   </style>
+    <title>GlobalChat Test Client</title>
+    <style>
+        .message-container {
+            margin: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            height: 400px;
+            overflow-y: auto;
+        }
+        .message {
+            margin: 5px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .received {
+            background-color: #e9ecef;
+            margin-right: 20%;
+        }
+        .sent {
+            background-color: #d4edda;
+            margin-left: 20%;
+            text-align: right;
+        }
+        .translation {
+            font-style: italic;
+            color: #666;
+            margin-top: 5px;
+            padding-top: 5px;
+            border-top: 1px solid #ddd;
+        }
+        .user-info {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .controls {
+            margin: 10px;
+            padding: 10px;
+        }
+        input[type="text"], input[type="email"], input[type="password"] {
+            padding: 5px;
+            margin: 5px;
+            width: 300px;
+        }
+        button {
+            padding: 5px 10px;
+            margin: 5px;
+        }
+        #connectionStatus {
+            margin-left: 10px;
+            font-weight: bold;
+        }
+        .login-section {
+            margin: 20px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .chat-section {
+            display: none;
+            margin: 20px;
+        }
+        .auth-toggle {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .auth-toggle button {
+            padding: 8px 20px;
+            margin: 0 5px;
+            border: 1px solid #ccc;
+            background: #f8f9fa;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .auth-toggle button.active {
+            background: #007bff;
+            color: white;
+            border-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
-   <h1>GlobalChat Test Client</h1>
-   
-   <div id="loginSection" class="login-section">
-       <h2>Login</h2>
-       <div>
-           <input type="text" id="email" placeholder="Username">
-       </div>
-       <div>
-           <input type="password" id="password" placeholder="Password">
-       </div>
-       <button onclick="login()">Login</button>
-   </div>
+    <h1>GlobalChat Test Client</h1>
+	<div id="loginSection" class="login-section">
+        <div class="auth-toggle">
+            <button onclick="showLogin()" id="loginToggle" class="active">Login</button>
+            <button onclick="showRegister()" id="registerToggle">Register</button>
+        </div>
 
-   <div id="chatSection" class="chat-section">
-       <div class="user-info" id="userInfo">
-           Not logged in
-       </div>
+        <div id="loginForm">
+            <h2>Login</h2>
+            <div>
+                <input type="text" id="loginUsername" placeholder="Username">
+            </div>
+            <div>
+                <input type="password" id="loginPassword" placeholder="Password">
+            </div>
+            <button onclick="login()">Login</button>
+        </div>
+	<div id="registerForm" style="display: none;">
+            <h2>Register</h2>
+            <div>
+                <input type="email" id="registerEmail" placeholder="Email">
+            </div>
+            <div>
+                <input type="text" id="registerUsername" placeholder="Username">
+            </div>
+            <div>
+                <input type="password" id="registerPassword" placeholder="Password">
+            </div>
+            <div>
+                <select id="registerLanguage">
+                    <option value="en">English</option>
+                    <option value="es">Spanish</option>
+                    <option value="fr">French</option>
+                </select>
+            </div>
+            <button onclick="register()">Register</button>
+        </div>
+    </div>
+	<div id="chatSection" class="chat-section">
+        <div class="user-info" id="userInfo">
+            Not logged in
+        </div>
 
-       <div class="controls">
-           <button onclick="connect()">Connect WebSocket</button>
-           <span id="connectionStatus">Not Connected</span>
-       </div>
+        <div class="controls">
+            <button onclick="connect()">Connect WebSocket</button>
+            <span id="connectionStatus">Not Connected</span>
+        </div>
 
-       <div class="message-container" id="messages"></div>
+        <div class="message-container" id="messages"></div>
 
-       <div class="controls">
-           <input type="text" id="messageInput" placeholder="Type a message">
-           <select id="languageSelect">
-               <option value="en">English</option>
-               <option value="es">Spanish</option>
-               <option value="fr">French</option>
-           </select>
-           <button onclick="sendMessage()">Send</button>
-       </div>
-   </div>
+        <div class="controls">
+            <input type="text" id="messageInput" placeholder="Type a message">
+            <select id="languageSelect">
+                <option value="en">English</option>
+                <option value="es">Spanish</option>
+                <option value="fr">French</option>
+            </select>
+            <select id="recipientSelect">
+                <option value="all">Everyone</option>
+            </select>
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+    <script>
+        let ws = null;
+        let currentUser = null;
+        let currentToken = null;
+        let onlineUsers = new Map();
 
-   <script>
-       let ws = null;
-       let currentUser = null;
-       let currentToken = null;
+        async function login() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
 
-       async function login() {
-           const email = document.getElementById('email').value;
-           const password = document.getElementById('password').value;
+            try {
+                const formData = new URLSearchParams();
+                formData.append('username', username);
+                formData.append('password', password);
 
-           try {
-               const formData = new URLSearchParams();
-               formData.append('username', email);
-               formData.append('password', password);
+                const response = await fetch('http://localhost:8000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: formData.toString()
+                });
 
-               const response = await fetch('http://localhost:8000/api/auth/login', {
-                   method: 'POST',
-                   headers: {
-                       'Content-Type': 'application/x-www-form-urlencoded',
-                   },
-                   body: formData.toString()
-               });
+                if (response.ok) {
+                    const data = await response.json();
+                    currentToken = data.access_token;
+                    await getUserInfo();
+                    document.getElementById('loginSection').style.display = 'none';
+                    document.getElementById('chatSection').style.display = 'block';
+                } else {
+                    const errorData = await response.json();
+                    console.error('Login error:', errorData);
+                    alert(`Login failed: ${errorData.detail || 'Unknown error'}`);
+                }
+            } catch (e) {
+                console.error('Login error:', e);
+                alert('Login failed');
+            }
+        }
 
-               if (response.ok) {
-                   const data = await response.json();
-                   currentToken = data.access_token;
-                   await getUserInfo();
-                   document.getElementById('loginSection').style.display = 'none';
-                   document.getElementById('chatSection').style.display = 'block';
-               } else {
-                   const errorData = await response.json();
-                   console.error('Login error:', errorData);
-                   alert(`Login failed: ${errorData.detail || 'Unknown error'}`);
-               }
-           } catch (e) {
-               console.error('Login error:', e);
-               alert('Login failed');
-           }
-       }
+	async function register() {
+            const email = document.getElementById('registerEmail').value;
+            const username = document.getElementById('registerUsername').value;
+            const password = document.getElementById('registerPassword').value;
+            const preferred_language = document.getElementById('registerLanguage').value;
 
-       async function getUserInfo() {
-           try {
-               const response = await fetch('http://localhost:8000/api/auth/me', {
-                   headers: {
-                       'Authorization': `Bearer ${currentToken}`
-                   }
-               });
-               if (response.ok) {
-                   currentUser = await response.json();
-                   updateUserInfo();
-               }
-           } catch (e) {
-               console.error('Error fetching user info:', e);
-           }
-       }
+            try {
+                const response = await fetch('http://localhost:8000/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email,
+                        username,
+                        password,
+                        preferred_language
+                    })
+                });
 
-       function updateUserInfo() {
-           document.getElementById('userInfo').innerHTML = `
-               Logged in as: ${currentUser.username}<br>
-               Preferred Language: ${currentUser.preferred_language}<br>
-               Auto-translate: ${currentUser.auto_translate ? 'Enabled' : 'Disabled'}
-           `;
-           document.getElementById('languageSelect').value = currentUser.preferred_language;
-       }
+                if (response.ok) {
+                    const data = await response.json();
+                    alert('Registration successful! Please login.');
+                    // Clear registration form
+                    document.getElementById('registerEmail').value = '';
+                    document.getElementById('registerUsername').value = '';
+                    document.getElementById('registerPassword').value = '';
+                    // Switch to login form
+                    showLogin();
+                    // Pre-fill login username
+                    document.getElementById('loginUsername').value = username;
+                } else {
+                    const errorData = await response.json();
+                    alert(`Registration failed: ${errorData.detail || 'Unknown error'}`);
+                }
+            } catch (e) {
+                console.error('Registration error:', e);
+                alert('Registration failed');
+            }
+        }
 
-       async function connect() {
-           if (!currentToken) {
-               alert('Please login first');
-               return;
-           }
+        async function getUserInfo() {
+            try {
+                const response = await fetch('http://localhost:8000/api/auth/me', {
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+                if (response.ok) {
+                    currentUser = await response.json();
+                    updateUserInfo();
+                }
+            } catch (e) {
+                console.error('Error fetching user info:', e);
+            }
+        }
 
-           // Connect WebSocket
-           ws = new WebSocket(`ws://localhost:8000/ws/${currentToken}`);
-           
-           ws.onopen = function() {
-               document.getElementById('connectionStatus').textContent = 'Connected';
-               document.getElementById('connectionStatus').style.color = 'green';
-           };
+	function updateUserInfo() {
+            document.getElementById('userInfo').innerHTML = `
+                Logged in as: ${currentUser.username}<br>
+                Preferred Language: ${currentUser.preferred_language}<br>
+                Auto-translate: ${currentUser.auto_translate ? 'Enabled' : 'Disabled'}
+            `;
+            document.getElementById('languageSelect').value = currentUser.preferred_language;
+        }
 
-           ws.onmessage = function(event) {
-               const message = JSON.parse(event.data);
-               const messagesDiv = document.getElementById('messages');
-               
-               // Create message element
-               const messageElement = document.createElement('div');
-               messageElement.className = 'message received';
-               
-               // Add message content
-               messageElement.innerHTML = `
-                   <strong>${message.sender.username}:</strong>
-                   <span>${message.content}</span>
-                   <div><small>Original language: ${message.original_language}</small></div>
-               `;
+        async function loadOnlineUsers() {
+            try {
+                const response = await fetch('http://localhost:8000/api/messages/users/online', {
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+                if (response.ok) {
+                    const users = await response.json();
+                    const recipientSelect = document.getElementById('recipientSelect');
+                    
+                    // Clear existing options except "Everyone"
+                    while (recipientSelect.options.length > 1) {
+                        recipientSelect.remove(1);
+                    }
+                    
+                    // Add users to dropdown and map
+                    users.forEach(user => {
+                        onlineUsers.set(user.id, user);
+                        const option = new Option(`${user.username} (${user.preferred_language})`, user.id);
+                        recipientSelect.add(option);
+                    });
+                }
+            } catch (e) {
+                console.error('Error loading users:', e);
+            }
+        }
 
-               // Add translation if available and needed
-               if (message.original_language !== currentUser.preferred_language && 
-                   message.translations && 
-                   message.translations[currentUser.preferred_language]) {
-                   const translationDiv = document.createElement('div');
-                   translationDiv.className = 'translation';
-                   translationDiv.textContent = message.translations[currentUser.preferred_language];
-                   messageElement.appendChild(translationDiv);
-               }
+        function showLogin() {
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('registerForm').style.display = 'none';
+            document.getElementById('loginToggle').classList.add('active');
+            document.getElementById('registerToggle').classList.remove('active');
+        }
 
-               messagesDiv.appendChild(messageElement);
-               messagesDiv.scrollTop = messagesDiv.scrollHeight;
-           };
+        function showRegister() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'block';
+            document.getElementById('loginToggle').classList.remove('active');
+            document.getElementById('registerToggle').classList.add('active');
+        }
 
-           ws.onclose = function() {
-               document.getElementById('connectionStatus').textContent = 'Disconnected';
-               document.getElementById('connectionStatus').style.color = 'red';
-           };
-       }
+	async function connect() {
+            if (!currentToken) {
+                alert('Please login first');
+                return;
+            }
 
-       function sendMessage() {
-           const content = document.getElementById('messageInput').value;
-           const language = document.getElementById('languageSelect').value;
-           
-           if (ws && content) {
-               // Add message to display
-               const messagesDiv = document.getElementById('messages');
-               const messageElement = document.createElement('div');
-               messageElement.className = 'message sent';
-               messageElement.innerHTML = `
-                   <strong>You:</strong>
-                   <span>${content}</span>
-                   <div><small>Original language: ${language}</small></div>
-               `;
-               messagesDiv.appendChild(messageElement);
-               messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            // Connect WebSocket
+            ws = new WebSocket(`ws://localhost:8000/ws/${currentToken}`);
+            
+            ws.onopen = async function() {
+                document.getElementById('connectionStatus').textContent = 'Connected';
+                document.getElementById('connectionStatus').style.color = 'green';
+                await loadOnlineUsers();
+            };
 
-               // Send via WebSocket
-               ws.send(JSON.stringify({
-                   content: content,
-                   original_language: language
-               }));
-               document.getElementById('messageInput').value = '';
-           }
-       }
+            ws.onmessage = function(event) {
+                const message = JSON.parse(event.data);
+                const messagesDiv = document.getElementById('messages');
+                
+                // Create message element
+                const messageElement = document.createElement('div');
+                messageElement.className = `message received${message.private ? ' private-message' : ''}`;
+                
+                // Add message content
+                let headerText = `<strong>${message.sender.username}:</strong>`;
+                if (message.private) {
+                    headerText = `<strong>Private from ${message.sender.username}:</strong>`;
+                }
+                
+                messageElement.innerHTML = `
+                    ${headerText}
+                    <span>${message.content}</span>
+                    <div><small>Original language: ${message.original_language}</small></div>
+                `;
 
-       // Allow pressing Enter to send message
-       document.getElementById('messageInput').addEventListener('keypress', function(e) {
-           if (e.key === 'Enter') {
-               sendMessage();
-           }
-       });
+                // Add translation if available and needed
+                if (message.original_language !== currentUser.preferred_language && 
+                    message.translations && 
+                    message.translations[currentUser.preferred_language]) {
+                    const translationDiv = document.createElement('div');
+                    translationDiv.className = 'translation';
+                    translationDiv.textContent = message.translations[currentUser.preferred_language];
+                    messageElement.appendChild(translationDiv);
+                }
 
-       // Allow pressing Enter to login
-       document.getElementById('password').addEventListener('keypress', function(e) {
-           if (e.key === 'Enter') {
-               login();
-           }
-       });
-   </script>
+                messagesDiv.appendChild(messageElement);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            };
+
+            ws.onclose = function() {
+                document.getElementById('connectionStatus').textContent = 'Disconnected';
+                document.getElementById('connectionStatus').style.color = 'red';
+            };
+        }
+
+	function sendMessage() {
+            const content = document.getElementById('messageInput').value;
+            const language = document.getElementById('languageSelect').value;
+            const recipientId = document.getElementById('recipientSelect').value;
+            
+            if (ws && content) {
+                // Add message to display
+                const messagesDiv = document.getElementById('messages');
+                const messageElement = document.createElement('div');
+                messageElement.className = `message sent${recipientId !== 'all' ? ' private-message' : ''}`;
+                
+                let headerText = '<strong>You:</strong>';
+                if (recipientId !== 'all') {
+                    const recipient = onlineUsers.get(Number(recipientId));
+                    headerText = `<strong>Private to ${recipient.username}:</strong>`;
+                }
+                
+                messageElement.innerHTML = `
+                    ${headerText}
+                    <span>${content}</span>
+                    <div><small>Original language: ${language}</small></div>
+                `;
+                messagesDiv.appendChild(messageElement);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+                // Send via WebSocket
+                ws.send(JSON.stringify({
+                    content: content,
+                    original_language: language,
+                    recipient_id: recipientId === 'all' ? null : Number(recipientId)
+                }));
+                document.getElementById('messageInput').value = '';
+            }
+        }
+
+        // Allow pressing Enter to send message
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Allow pressing Enter to login
+        document.getElementById('loginPassword').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                login();
+            }
+        });
+
+        // Allow pressing Enter to register
+        document.getElementById('registerPassword').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                register();
+            }
+        });
+    </script>
 </body>
 </html>
